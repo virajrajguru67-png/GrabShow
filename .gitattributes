@@ -1,0 +1,7 @@
+*.so filter=lfs diff=lfs merge=lfs -text
+*.apk filter=lfs diff=lfs merge=lfs -text
+*.dill filter=lfs diff=lfs merge=lfs -text
+*.aar filter=lfs diff=lfs merge=lfs -text
+flutter_demo/build/**/*.so filter=lfs diff=lfs merge=lfs -text
+flutter_demo/build/**/*.apk filter=lfs diff=lfs merge=lfs -text
+flutter_demo/build/**/*.dill filter=lfs diff=lfs merge=lfs -text

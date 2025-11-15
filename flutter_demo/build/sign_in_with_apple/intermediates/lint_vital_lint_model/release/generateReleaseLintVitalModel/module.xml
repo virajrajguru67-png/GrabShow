@@ -1,0 +1,26 @@
+<lint-module
+    format="1"
+    dir="F:\Pub\Cache\hosted\pub.dev\sign_in_with_apple-6.1.4\android"
+    name=":sign_in_with_apple"
+    type="LIBRARY"
+    maven="com.aboutyou.dart_packages.sign_in_with_apple:sign_in_with_apple:1.0-SNAPSHOT"
+    agpVersion="8.9.1"
+    buildFolder="F:\App\flutter_demo\build\sign_in_with_apple"
+    bootClassPath="V:\AppData\Local\Android\Sdk\platforms\android-34\android.jar;V:\AppData\Local\Android\Sdk\build-tools\35.0.0\core-lambda-stubs.jar"
+    javaSourceLevel="1.8"
+    compileTarget="android-34"
+    neverShrinking="true">
+  <lintOptions
+      disable="InvalidPackage"
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true">
+    <severities>
+      <severity
+        id="InvalidPackage"
+        severity="IGNORE" />
+    </severities>
+  </lintOptions>
+  <variant name="release"/>
+</lint-module>
