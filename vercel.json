@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "cd backend && npm install && npm run build && cd ../api && npm install",
+  "installCommand": "cd backend && npm install && npm run prisma:generate && npm run build && cd ../api && npm install",
   "rewrites": [
     {
       "source": "/api/(.*)",
