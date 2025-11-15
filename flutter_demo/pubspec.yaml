@@ -1,0 +1,49 @@
+name: flutter_demo_frontend
+description: Demo Flutter frontend showcasing basic layout and navigation.
+publish_to: "none"
+version: 0.1.0+2
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  provider: ^6.1.2
+  http: ^1.2.2
+  shared_preferences: ^2.3.2
+  path_provider: ^2.1.2
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.0
+  qr_flutter: ^4.1.0
+  intl: ^0.19.0
+  collection: ^1.18.0
+  url_launcher: ^6.2.5
+  image_picker: ^1.1.2
+  http_parser: ^4.0.2
+  youtube_player_iframe: ^5.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    image_path: "web/icons/Kaam-Bharie5.png"
+    background_color: "#ffffff"
+    theme_color: "#0175C2"
+  image_path: "web/icons/Kaam-Bharie5.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "web/icons/Kaam-Bharie5.png"
+

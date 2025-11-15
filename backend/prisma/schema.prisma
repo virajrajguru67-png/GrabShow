@@ -1,0 +1,342 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  OWNER
+  FINANCE
+  CONTENT
+  OPERATIONS
+  SUPPORT
+  MARKETING
+}
+
+enum AdminStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+enum MovieStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ShowtimeStatus {
+  SCHEDULED
+  ON_SALE
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingStatus {
+  RESERVED
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
+enum SettlementStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  IN_FLIGHT
+  COMPLETED
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String
+  displayName  String
+  avatarUrl    String?     @db.Text
+  phoneNumber  String?
+  isAdmin      Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  adminProfile        AdminUser?
+  sessions            Session[]
+  bookings            Booking[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model AdminUser {
+  id           String           @id @default(uuid())
+  userId       String           @unique
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       AdminStatus      @default(INVITED)
+  lastActiveAt DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  roles        AdminUserRole[]
+}
+
+model AdminUserRole {
+  id          Int       @id @default(autoincrement())
+  adminUserId String
+  role        AdminRole
+
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@unique([adminUserId, role])
+  @@index([adminUserId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  revokedAt    DateTime?
+  ipAddress    String?  @db.VarChar(45)
+  userAgent    String?  @db.Text
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otp       String   @db.VarChar(6)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([otp])
+}
+
+model Movie {
+  id              String         @id @default(uuid())
+  title           String
+  slug            String         @unique
+  status          MovieStatus    @default(DRAFT)
+  durationMinutes Int?
+  synopsis        String?        @db.Text
+  tagline         String?
+  posterUrl       String?
+  backdropUrl     String?
+  releaseYear     Int?
+  rating          Decimal?       @db.Decimal(4, 2)
+  isTrending      Boolean        @default(false)
+  isTopPick       Boolean        @default(false)
+  isUpcoming      Boolean        @default(false)
+  metadata        Json?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  genres          MovieGenre[]
+  languages       MovieLanguage[]
+  showtimes       Showtime[]
+}
+
+model MovieGenre {
+  id       Int    @id @default(autoincrement())
+  movieId  String
+  name     String
+
+  movie    Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@index([movieId])
+}
+
+model MovieLanguage {
+  id       Int    @id @default(autoincrement())
+  movieId  String
+  name     String
+
+  movie    Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@index([movieId])
+}
+
+model Auditorium {
+  id              String    @id @default(uuid())
+  cinemaId        String
+  cinemaName      String
+  name            String
+  capacity        Int
+  layoutVersion   Int        @default(1)
+  layoutJson      Json
+  layoutUpdatedAt DateTime   @default(now())
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  showtimes       Showtime[]
+}
+
+model Showtime {
+  id                String          @id @default(uuid())
+  movieId           String
+  auditoriumId      String
+  startsAt          DateTime
+  endsAt            DateTime
+  basePrice         Decimal         @db.Decimal(10, 2)
+  status            ShowtimeStatus  @default(SCHEDULED)
+  seatLayoutVersion Int             @default(1)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  movie             Movie           @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  auditorium        Auditorium      @relation(fields: [auditoriumId], references: [id], onDelete: Cascade)
+  pricingTiers      ShowtimePricingTier[]
+  bookings          Booking[]
+
+  @@index([movieId])
+  @@index([auditoriumId])
+}
+
+model ShowtimePricingTier {
+  id         String   @id @default(uuid())
+  showtimeId String
+  label      String
+  price      Decimal  @db.Decimal(10, 2)
+  seatTypes  Json
+  createdAt  DateTime @default(now())
+
+  showtime   Showtime @relation(fields: [showtimeId], references: [id], onDelete: Cascade)
+
+  @@index([showtimeId])
+}
+
+model Booking {
+  id            String        @id @default(uuid())
+  reference     String        @unique
+  showtimeId    String
+  userId        String?
+  purchaserEmail String
+  purchaserName String
+  status        BookingStatus @default(CONFIRMED)
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  currency      String        @default("INR")
+  purchasedAt   DateTime      @default(now())
+  movieTitle    String
+
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  showtime      Showtime      @relation(fields: [showtimeId], references: [id], onDelete: Cascade)
+  tickets       BookingTicket[]
+  auditLog      BookingAudit[]
+  settlements   SettlementTransaction[]
+
+  @@index([showtimeId])
+  @@index([userId])
+}
+
+model BookingTicket {
+  id         String   @id @default(uuid())
+  bookingId  String
+  seatId     String
+  seatLabel  String
+  price      Decimal  @db.Decimal(10, 2)
+  tierLabel  String?
+  tierId     String?
+
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model BookingAudit {
+  id        String   @id @default(uuid())
+  bookingId String
+  type      String
+  message   String
+  actor     String
+  createdAt DateTime @default(now())
+
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model SettlementTransaction {
+  id             String            @id @default(uuid())
+  gateway        String
+  transactionId  String
+  amount         Decimal           @db.Decimal(10, 2)
+  currency       String            @default("INR")
+  status         SettlementStatus  @default(PENDING)
+  fees           Decimal           @db.Decimal(10, 2)
+  netPayout      Decimal           @db.Decimal(10, 2)
+  settledAt      DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  bookingId      String?
+
+  booking        Booking?          @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+}
+
+model NotificationSegment {
+  id          String                  @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  campaigns   NotificationCampaign[]
+}
+
+model NotificationCampaign {
+  id           String          @id @default(uuid())
+  name         String
+  subject      String
+  channels     Json
+  status       CampaignStatus  @default(DRAFT)
+  scheduledAt  DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  segmentId    String
+  statsSent    Int             @default(0)
+  statsOpened  Int             @default(0)
+  statsClicked Int             @default(0)
+
+  segment      NotificationSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  @@index([segmentId])
+}
+
+model PlatformSettings {
+  id                 Int      @id @default(1)
+  razorpayKey        String   @default("")
+  stripeKey          String   @default("")
+  settlementDays     Int      @default(2)
+  cgst               Decimal  @db.Decimal(5, 2) @default(0)
+  sgst               Decimal  @db.Decimal(5, 2) @default(0)
+  convenienceFee     Decimal  @db.Decimal(5, 2) @default(0)
+  theatreName        String   @default("")
+  supportEmail       String   @default("")
+  contactNumber      String   @default("")
+  address            String   @default("") @db.Text
+  termsUrl           String   @default("")
+  privacyUrl         String   @default("")
+  refundWindowHours  Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model PaymentAudit {
+  id             String   @id @default(uuid())
+  transactionId  String   @unique
+  status         String
+  method         String
+  amount         Decimal  @db.Decimal(10, 2)
+  movieTitle     String
+  showtime       String?
+  seats          Json?
+  createdAt      DateTime @default(now())
+}
