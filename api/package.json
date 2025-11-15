@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "@vercel/node": "^3.0.0",
-    "serverless-http": "^3.2.0"
+    "@vercel/node": "^3.0.0"
   }
 }

@@ -1,6 +1,6 @@
 // Vercel serverless function wrapper for Express backend
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createApp } from '../backend/src/app.js';
+import { createApp } from '../backend/dist/app.js';
 
 // Create Express app once (cached for subsequent invocations)
 let app: any = null;

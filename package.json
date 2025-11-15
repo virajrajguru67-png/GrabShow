@@ -1,0 +1,7 @@
+{
+  "name": "grabshow",
+  "version": "1.0.0",
+  "scripts": {
+    "install": "cd backend && npm install && npm run build && cd ../api && npm install"
+  }
+}
