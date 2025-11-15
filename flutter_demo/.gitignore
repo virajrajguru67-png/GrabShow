@@ -30,7 +30,7 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
+# /build/  # Commented out to include build folder in git (not recommended - 940MB+)
 /coverage/
 
 # Symbolication related
