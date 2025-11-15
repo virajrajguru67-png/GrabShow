@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -16,21 +16,23 @@ class AuthRepository {
     String? serverClientId,
   })  : _apiClient = apiClient ?? ApiClient(),
         _googleSignIn = googleSignIn ??
-            (kIsWeb 
-              ? GoogleSignIn(
-                  scopes: ['email', 'profile', 'openid'], // 'openid' is required for ID token
-                  clientId: webClientId, // For web, use clientId
-                  serverClientId: serverClientId ?? webClientId, // Also set serverClientId for ID token
-                )
-              : GoogleSignIn(
-                  scopes: ['email', 'profile', 'openid'], // 'openid' is required for ID token
-                  // For Android/iOS, don't set clientId - app is identified by package name and SHA-1
-                  // Only set serverClientId if you need server-side token verification
-                  serverClientId: serverClientId ?? webClientId,
-                ));
+            (kIsWeb
+                ? GoogleSignIn(
+                    scopes: ['email', 'profile'],
+                    clientId: webClientId ??
+                        "851473230830-pluq3delcr6gdo5ifm0ik9tb343hafpf.apps.googleusercontent.com",
+                    // Explicitly do NOT pass serverClientId on Web
+                  )
+                : GoogleSignIn(
+                    scopes: ['email', 'profile'],
+                    serverClientId: serverClientId ??
+                        "851473230830-pluq3delcr6gdo5ifm0ik9tb343hafpf.apps.googleusercontent.com",
+                    // Explicitly do NOT pass clientId on Android/iOS
+                  ));
 
   final ApiClient _apiClient;
   final GoogleSignIn? _googleSignIn;
+  bool _isGoogleSignInInProgress = false;
 
   Future<AuthSession> signInWithEmail({
     required String email,
@@ -64,14 +66,17 @@ class AuthRepository {
     if (google == null) {
       throw const AuthException('Google sign-in is not configured for this platform');
     }
+    
+    // Prevent concurrent sign-in attempts
+    if (_isGoogleSignInInProgress) {
+      throw const AuthException('Google sign-in is already in progress');
+    }
+    
     try {
-      // First, sign out any existing account to ensure fresh sign-in
-      try {
-        await google.signOut();
-      } catch (e) {
-        // Ignore errors if no account is signed in
-      }
+      _isGoogleSignInInProgress = true;
       
+      // Google Sign-In library handles account switching automatically
+      // No need to sign out first - this was causing "request id mismatch" errors
       final account = await google.signIn();
       if (account == null) {
         throw const AuthException('Sign-in aborted by user');
@@ -114,7 +119,11 @@ class AuthRepository {
       throw AuthException(message);
     } catch (error) {
       if (error is AuthException) rethrow;
-      throw AuthException('Google sign-in error: ${error.toString()}');
+      // Safely convert error to string to avoid JavaScript interop issues on web
+      final errorMessage = _safeErrorToString(error);
+      throw AuthException('Google sign-in error: $errorMessage');
+    } finally {
+      _isGoogleSignInInProgress = false;
     }
   }
 
@@ -150,7 +159,7 @@ class AuthRepository {
       throw AuthException(error.message ?? 'Apple Sign In failed');
     } catch (error) {
       if (error is AuthException) rethrow;
-      throw AuthException(error.toString());
+      throw AuthException(_safeErrorToString(error));
     }
   }
 
@@ -259,13 +268,26 @@ class AuthRepository {
     );
   }
 
+  /// Safely converts an error to a string, avoiding JavaScript interop issues on web
+  String _safeErrorToString(dynamic error) {
+    try {
+      if (error == null) return 'Unknown error';
+      if (error is String) return error;
+      if (error is Error) return error.toString();
+      // For other types, try toString() but catch any interop issues
+      return error.toString();
+    } catch (_) {
+      return 'An error occurred during Google sign-in';
+    }
+  }
+
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> payload) async {
     try {
       return await _apiClient.post(path, body: jsonEncode(payload));
     } on ApiException catch (error) {
       throw AuthException(error.message);
     } catch (error) {
-      throw AuthException(error.toString());
+      throw AuthException(_safeErrorToString(error));
     }
   }
 
@@ -279,7 +301,7 @@ class AuthRepository {
     } on ApiException catch (error) {
       throw AuthException(error.message);
     } catch (error) {
-      throw AuthException(error.toString());
+      throw AuthException(_safeErrorToString(error));
     }
   }
 }

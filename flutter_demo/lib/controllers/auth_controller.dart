@@ -138,7 +138,7 @@ class AuthController extends ChangeNotifier {
       _setStatus(AuthStatus.error);
       return false;
     } catch (error) {
-      _errorMessage = error.toString();
+      _errorMessage = _safeErrorToString(error);
       _setStatus(AuthStatus.error);
       return false;
     }
@@ -211,6 +211,19 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  /// Safely converts an error to a string, avoiding JavaScript interop issues on web
+  String _safeErrorToString(dynamic error) {
+    try {
+      if (error == null) return 'Unknown error';
+      if (error is String) return error;
+      if (error is Error) return error.toString();
+      // For other types, try toString() but catch any interop issues
+      return error.toString();
+    } catch (_) {
+      return 'An error occurred';
+    }
+  }
+
   Future<void> _execute(Future<AuthSession> Function() operation) async {
     _errorMessage = null;
     _setStatus(AuthStatus.authenticating);
@@ -222,7 +235,7 @@ class AuthController extends ChangeNotifier {
       _errorMessage = error.message;
       _setStatus(AuthStatus.error);
     } catch (error) {
-      _errorMessage = error.toString();
+      _errorMessage = _safeErrorToString(error);
       _setStatus(AuthStatus.error);
     }
   }
@@ -252,7 +265,7 @@ class AuthController extends ChangeNotifier {
       _errorMessage = error.message;
       await signOut();
     } catch (error) {
-      _errorMessage = error.toString();
+      _errorMessage = _safeErrorToString(error);
       await signOut();
     }
   }

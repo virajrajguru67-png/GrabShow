@@ -6,10 +6,6 @@
       "destination": "/api/index.ts"
     },
     {
-      "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|json|wasm))",
-      "destination": "/flutter_demo/build/web/$1"
-    },
-    {
       "source": "/(.*)",
       "destination": "/flutter_demo/build/web/index.html"
     }

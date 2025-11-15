@@ -1,5 +1,8 @@
 {
-  "dependencies": {
-    "google-translate-api": "^2.3.0"
-  }
+  "name": "flutter_demo_frontend",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "flutter build web --release --dart-define=API_BASE_URL=$API_BASE_URL"
+  },
+  "dependencies": {}
 }
