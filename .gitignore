@@ -5,7 +5,7 @@ node_modules/
 
 # Build outputs
 # build/  # Commented out - user wants to include build folder
-dist/
+# dist/  # Commented out - backend/dist needed for Vercel deployment
 *.map
 *.js.map
 
